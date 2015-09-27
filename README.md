@@ -26,22 +26,51 @@ You must create and authorization object with the name Z_JSON and just one field
 
 The authorization object will be included in the corresponding user profile. An asterisk (*) will allow the user to access all function modules. It is very recommended that any user that is going to access function modules through this adaptor has a profile with just the functions that he is allowed to access.
 
-### ABAP based or transformation based serializers
-
-
 
 ## How to invoke
 
-You must create a service in ICF to make an endpoint for the adaptor. 
+### Create ICF service
 
+You must create a service in ICF to make an endpoint for the adaptor. Here goes an example in transaction SICF:
+
+![Define ICF service for the JSON adaptor](https://raw.githubusercontent.com/cesar-sap/abap_fm_json/master/SICF.jpg)
+
+In this example, you will invoke the service using the following syntax:
+
+`http(s)://your_abap_server:<port>/fmcall/<function_module_name>?<parameters>`
+
+### Function module parameters
+
+You can pass as GET query string parameters any of the function IMPORT parameters that are defined and single data types (not structures or tables).
+
+In order to pass structures or tables to the function module, use any of the HTTP methods that support a content body (POST or PUT mainly).
+
+Some parameters exist as standard. Most notably:
+
+`format=<output_format` set the format of the response,
+`lowercase=X` will show ABAP variable names in lower case,
+`show_import_params=X` will include the IMPORT parameters in the response,
+`callback=<callback_name>` wraps response in a JavaScript callback function. 
 
 ### Supported output formats
+
+The adaptor can produce output in the following formats:
+
+JSON:
+
+XML:
+
+YAML:
+
+PERL: just for fun. 
 
 ## Session and logon support
 
 ## Cross Site requests
 
 ## Notes
+
+### ABAP based or transformation based serializers
 
 ## Contact
 
