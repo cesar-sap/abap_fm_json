@@ -8,13 +8,32 @@ This adapter was first published in SAP SCN blog (http://scn.sap.com/community/a
 This adapter is specific to SAP ABAP systems. It should work on any SAP release from 7.0 onwards, however some slight modifications may be needed for older SP levels. 
 
 The purpose of this adaptor is to allow calling ABAP function modules via HTTP and serializing the input and output in JSON format. This allows a very simple way to invoke ABAP functionality from HTML5 and AJAX or Jquery based applications. 
+
 ## How to install
+
+In order to install this you need [SAPLink](https://sap.assembla.com/spaces/saplink/wiki). First install SAPLink in your ABAP server following the [SAPLink installation instrucctions](http://wiki.scn.sap.com/wiki/display/ABAP/SAPlink+User+Documentation). Be sure to install the required [SAPLink plugins](https://www.assembla.com/spaces/saplink/wiki/SAPlink_plugin_list). To minimize trouble, I recommend your installing the [Nugget that contains all commonly used plugings](https://www.assembla.com/spaces/saplink-plugins/subversion/source/HEAD/build).
+
+This adaptor works with any ABAP version from 7.0 onwards. I have tested it in 7.31 and 7.40, which are the two releases where I can currently maintain it. If you are using any older release please contact me for indications.
+
+As a rule, to make it work in any pre 7.31 release, you have to comment out all calls to the ABAP built-in JSON converter, that is, the calls to the methods SERIALIZE_ID and DESERIALIZE_ID in HANDLE_REQUEST and the code inside both methods. You cannot use them anyway in pre 7.31 releases. 
+
 
 ### ABAP Authorization 
 
+The module includes an AUTHORITY_CHECK call to a custom authorization object named Z_JSON that validates if the user can access the function module. 
+
+You must create and authorization object with the name Z_JSON and just one field named FNMANE as authorization objects are not yet transported with SAPLink. Use transaction SU21 for this.
+
+The authorization object will be included in the corresponding user profile. An asterisk (*) will allow the user to access all function modules. It is very recommended that any user that is going to access function modules through this adaptor has a profile with just the functions that he is allowed to access.
+
 ### ABAP based or transformation based serializers
 
+
+
 ## How to invoke
+
+You must create a service in ICF to make an endpoint for the adaptor. 
+
 
 ### Supported output formats
 
