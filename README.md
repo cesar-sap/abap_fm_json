@@ -30,7 +30,7 @@ The authorization object will be included in the corresponding user profile. An 
 
 ## Create ICF service
 
-You must create a service in ICF to make an endpoint for the adaptor. Here goes an example in transaction SICF:
+You must create a service in ICF to make an endpoint for the adaptor. The service must use class ZCL_JSON_HANDLER as the first entry in the Handler List. Here goes an example in transaction SICF:
 
 ![Define ICF service for the JSON adaptor](https://raw.githubusercontent.com/cesar-sap/abap_fm_json/master/SICF.jpg)
 
