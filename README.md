@@ -11,6 +11,8 @@ The purpose of this adaptor is to allow calling ABAP function modules via HTTP a
 
 ## How to install
 
+*Many people are currently getting trouble to make SAPLink work. If you come accross problems, I have made available a transport request for direct import into an ABAP system in [transport/750](https://github.com/cesar-sap/abap_fm_json/tree/master/transport/750).
+
 In order to install this you need [SAPLink](https://sap.assembla.com/spaces/saplink/wiki). First install SAPLink in your ABAP server following the [SAPLink installation instrucctions](http://wiki.scn.sap.com/wiki/display/ABAP/SAPlink+User+Documentation). Be sure to install the required [SAPLink plugins](https://www.assembla.com/spaces/saplink/wiki/SAPlink_plugin_list). To minimize trouble, I recommend your installing the [Nugget that contains all commonly used plugings](https://www.assembla.com/spaces/saplink-plugins/subversion/source/HEAD/build).
 
 This adaptor works with any ABAP version from 7.0 onwards. I have tested it in 7.31, 7.40 and 7.50, which are the three releases where I can currently maintain it. If you are using any older release please contact me for indications.
@@ -24,7 +26,7 @@ The module includes an AUTHORITY_CHECK call to a custom authorization object nam
 
 You must create and authorization object with the name Z_JSON and just one field named FNMANE as authorization objects are not yet transported with SAPLink. Use transaction SU21 for this.
 
-The authorization object will be included in the corresponding user profile. An asterisk (*) will allow the user to access all function modules. It is very recommended that any user that is going to access function modules through this adaptor has a profile with just the functions that he is allowed to access.
+The authorization object will be included in the corresponding user profile. An asterisk (\*) will allow the user to access all function modules. It is very recommended that any user that is going to access function modules through this adaptor has a profile with just the functions that he is allowed to access.
 
 
 ## How to invoke
