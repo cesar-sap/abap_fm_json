@@ -72,7 +72,7 @@ JSONP is supported. CORS support is planned.
 
 ## ABAP based or transformation based serializers
 
-Originally this adaptor implemented pure ABAP based JSON to ABAP and ABAP to JSON serializers. Since [January 2013]() ABAP built-in transformations are available. The adaptor offers you the two options. The original pure ABAP serializers are activated by default. In order to use the built-in transformations, please comment out the corresponding lines in the HANDLE_REQUEST method.
+Originally this adaptor implemented pure ABAP based JSON to ABAP and ABAP to JSON serializers. Since [January 2013](http://scn.sap.com/community/abap/blog/2013/01/07/abap-and-json) ABAP built-in transformations are available. The adaptor offers you the two options. The original pure ABAP serializers are activated by default. In order to use the built-in transformations, please comment out the corresponding lines in the HANDLE_REQUEST method.
 
 ## Comments
 
