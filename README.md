@@ -11,7 +11,7 @@ The purpose of this adaptor is to allow calling ABAP function modules via HTTP a
 
 ## How to install
 
-*Many people are currently getting trouble to make SAPLink work. If you come accross problems, I have made available a transport request for direct import into an ABAP system in [transport/750](https://github.com/cesar-sap/abap_fm_json/tree/master/transport/750).
+*Many people are currently getting trouble to make SAPLink work. If you come accross problems, I have made available a transport request for direct import into an ABAP system in [transport/750](https://github.com/cesar-sap/abap_fm_json/tree/master/transport/750)*.
 
 In order to install this you need [SAPLink](https://sap.assembla.com/spaces/saplink/wiki). First install SAPLink in your ABAP server following the [SAPLink installation instrucctions](http://wiki.scn.sap.com/wiki/display/ABAP/SAPlink+User+Documentation). Be sure to install the required [SAPLink plugins](https://www.assembla.com/spaces/saplink/wiki/SAPlink_plugin_list). To minimize trouble, I recommend your installing the [Nugget that contains all commonly used plugings](https://www.assembla.com/spaces/saplink-plugins/subversion/source/HEAD/build).
 
@@ -20,7 +20,7 @@ This adaptor works with any ABAP version from 7.0 onwards. I have tested it in 7
 As a rule, to make it work in any pre 7.31 release, you have to comment out all calls to the ABAP built-in JSON converter, that is, the calls to the methods SERIALIZE_ID and DESERIALIZE_ID in HANDLE_REQUEST and the code inside both methods. You cannot use them anyway in pre 7.31 releases. 
 
 
-### ABAP Authorization 
+## ABAP Authorization 
 
 The module includes an AUTHORITY_CHECK call to a custom authorization object named Z_JSON that validates if the user can access the function module. 
 
@@ -28,10 +28,7 @@ You must create and authorization object with the name Z_JSON and just one field
 
 The authorization object will be included in the corresponding user profile. An asterisk (\*) will allow the user to access all function modules. It is very recommended that any user that is going to access function modules through this adaptor has a profile with just the functions that he is allowed to access.
 
-
-## How to invoke
-
-### Create ICF service
+## Create ICF service
 
 You must create a service in ICF to make an endpoint for the adaptor. Here goes an example in transaction SICF:
 
@@ -41,7 +38,7 @@ In this example, you will invoke the service using the following syntax:
 
 `http(s)://your_abap_server:<port>/fmcall/<function_module_name>?<parameters>`
 
-### Function module parameters
+## Function module parameters
 
 You can pass as GET query string parameters any of the function IMPORT parameters that are defined and single data types (not structures or tables).
 
@@ -57,7 +54,7 @@ Some parameters exist as standard. Most notably:
 
 `callback=<callback_name>` wraps response in a JavaScript callback function (for [jsonp](http://stackoverflow.com/questions/3839966/can-anyone-explain-what-jsonp-is-in-layman-terms) enabled calls). 
 
-### Supported output formats
+## Supported output formats
 
 The adaptor can produce output in the following formats: [JSON](http://www.json.org/), plain XML, [YAML 1.0](http://yaml.org/spec/1.0/), and [Perl](http://perldoc.perl.org/Data/Dumper.html) (which I did just for fun, but has itself shown to be quite useful in a number of occassions). 
 
