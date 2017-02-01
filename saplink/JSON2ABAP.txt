@@ -1,0 +1,230 @@
+method JSON2ABAP.
+*/************************************************/*
+*/ Input any abap data and this method tries to   /*
+*/ fill it with the data in the JSON string.      /*
+*/  Thanks to Juan Diaz for helping here!!        /*
+*/************************************************/*
+
+  type-pools: abap, js.
+
+  data:
+    js_script         type string,
+    js_started        type i value 0,
+    l_json_string     type string,
+    js_property_table type   js_property_tab,
+    js_property       type line of js_property_tab,
+    l_property_path   type string,
+    compname          type string,
+    item_path         type string.
+
+  data:
+    l_type   type c,
+    l_value  type string,
+    linetype type string,
+    l_comp   type line of ABAP_COMPDESCR_TAB.
+
+  data:
+    datadesc type ref to CL_ABAP_TYPEDESCR,
+    drefdesc type ref to CL_ABAP_TYPEDESCR,
+    linedesc type ref to CL_ABAP_TYPEDESCR,
+    strudesc type ref to CL_ABAP_STRUCTDESCR,
+    tabldesc type ref to CL_ABAP_TABLEDESCR.
+
+  data newline type ref to data.
+
+  field-symbols:
+    <abap_data> type any,
+    <itab>      type any table,
+    <comp>      type any,
+    <jsprop>    type line of js_property_tab,
+    <abapcomp>  type abap_compdescr.
+
+
+  define assign_scalar_value.
+    "   &1   <abap_data>
+    "   &2   js_property-value
+    describe field &1 type l_type.
+    l_value = &2.
+* convert or adapt scalar values to ABAP.
+    case l_type.
+      when 'D'. " date type
+        if l_value cs '-'.
+          replace all occurrences of '-' in l_value with space.
+          condense l_value no-gaps.
+        endif.
+      when 'T'. " time type
+        if l_value cs ':'.
+          replace all occurrences of ':' in l_value with space.
+          condense l_value no-gaps.
+        endif.
+      when others.
+        " may be other conversions or checks could be implemented here.
+    endcase.
+    &1 = l_value.
+  end-of-definition.
+
+
+  if js_object is not bound.
+
+    if json_string is initial. exit. endif. " exit method if there is nothing to parse
+
+    l_json_string = json_string.
+    " js_object = cl_java_script=>create( STACKSIZE = 16384 ).
+    js_object = cl_java_script=>create( STACKSIZE = 16384 HEAPSIZE = 960000 ).
+
+***************************************************
+*  Parse JSON using JavaScript                    *
+***************************************************
+    js_object->bind( exporting name_obj = 'abap_data' name_prop = 'json_string'    changing data = l_json_string ).
+    js_object->bind( exporting name_obj = 'abap_data' name_prop = 'script_started' changing data = js_started ).
+
+* We use the JavaScript engine included in ABAP to read the JSON string.
+* We simply use the recommended way to eval a JSON string as specified
+* in RFC 4627 (http://www.ietf.org/rfc/rfc4627.txt).
+*
+* Security considerations:
+*
+*   Generally there are security issues with scripting languages.  JSON
+*   is a subset of JavaScript, but it is a safe subset that excludes
+*   assignment and invocation.
+*
+*   A JSON text can be safely passed into JavaScript's eval() function
+*   (which compiles and executes a string) if all the characters not
+*   enclosed in strings are in the set of characters that form JSON
+*   tokens.  This can be quickly determined in JavaScript with two
+*   regular expressions and calls to the test and replace methods.
+*
+*      var my_JSON_object = !(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
+*             text.replace(/"(\\.|[^"\\])*"/g, ''))) &&
+*         eval('(' + text + ')');
+
+    concatenate
+
+         'var json_obj; '
+         'var json_text; '
+
+         'function start() { '
+         '  if(abap_data.script_started) { return; } '
+         '  json_text = abap_data.json_string;'
+         '  json_obj = !(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test( '
+         '      json_text.replace(/"(\\.|[^"\\])*"/g, ''''))) && '
+         '    eval(''('' + json_text + '')''); '
+         '  abap_data.script_started = 1; '
+         '} '
+
+         'if(!abap_data.script_started) start(); '
+
+
+       into js_script respecting blanks separated by xnl.
+
+    js_object->compile( script_name = 'json_parser'     script = js_script ).
+    js_object->execute( script_name = 'json_parser' ).
+
+    if js_object->last_error_message is not initial.
+      RAISE EXCEPTION type zcx_json
+        EXPORTING
+          message = js_object->last_error_message.
+    endif.
+
+  endif.
+** End of JS processing.
+
+**
+  if var_name is not initial.
+    concatenate property_path var_name into l_property_path separated by '.'.
+  else.
+    l_property_path = property_path.
+  endif.
+**
+
+**
+  js_property_table = js_object->get_properties_scope_global( property_path = l_property_path ).
+  property_table = js_property_table.
+  if l_property_path eq 'json_obj'. exit. endif.  " Just get top level properties and return
+
+*
+* Get ABAP data type, dereference if necessary and start
+  datadesc = cl_abap_typedescr=>DESCRIBE_BY_DATA( abap_data ).
+  if datadesc->kind eq cl_abap_typedescr=>kind_ref.
+    assign abap_data->* to <abap_data>.
+  else.
+    assign abap_data to <abap_data>.
+  endif.
+  datadesc = cl_abap_typedescr=>DESCRIBE_BY_DATA( <abap_data> ).
+
+
+  case datadesc->kind.
+
+    when cl_abap_typedescr=>kind_elem.
+* Scalar: process ABAP elements. Assume no type conversions for the moment.
+      if var_name is initial.
+        RAISE EXCEPTION type zcx_json
+          EXPORTING
+            message = 'VAR_NAME is required for scalar values.'.
+      endif.
+      js_property_table = js_object->get_properties_scope_global( property_path = property_path ).
+      read table js_property_table with key name = var_name into js_property.
+      if sy-subrc eq 0.
+        assign_scalar_value <abap_data> js_property-value.
+      endif.
+
+
+    when cl_abap_typedescr=>kind_struct.
+* Process ABAP structures
+      strudesc ?= datadesc.
+      loop at js_property_table assigning <jsprop>.
+        compname = <jsprop>-name.
+        translate compname to upper case.
+        read table strudesc->COMPONENTS with key name = compname into l_comp.
+        if sy-subrc eq 0.
+          assign component l_comp-name of structure <abap_data> to <comp>.
+          case l_comp-type_kind.
+            when    cl_abap_typedescr=>TYPEKIND_STRUCT1  " 'v'
+                 or cl_abap_typedescr=>TYPEKIND_STRUCT2  " 'u'
+                 or cl_abap_typedescr=>TYPEKIND_TABLE.   " 'h' (may need a different treatment one day)
+              concatenate l_property_path <jsprop>-name into item_path separated by '.'.
+*> Recursive call here
+              json2abap( exporting property_path = item_path changing abap_data = <comp> js_object = js_object ).
+
+            when others.
+* Process scalars in structures (same as the kind_elem above)
+              assign_scalar_value <comp> <jsprop>-value.
+
+          endcase.
+        endif.
+      endloop.
+
+    when cl_abap_typedescr=>kind_table.
+* Process ABAP tables
+      if js_property_table is not initial.
+        tabldesc ?= datadesc.
+        linedesc = tabldesc->get_table_line_type( ).
+        linetype = linedesc->get_relative_name( ).
+        assign <abap_data> to <itab>.
+        loop at js_property_table into js_property where kind NE 'I'. " I contains the JS object length
+          create data newline type (linetype).
+          assign newline->* to <comp>.
+          case js_property-kind.
+            when 'S'.
+              " Process scalars in plain table components(same as the kind_elem above)
+              assign_scalar_value <comp> js_property-value.
+            when 'O'.
+              concatenate l_property_path js_property-name into item_path separated by '.'.
+              condense item_path.
+*> Recursive call here
+              json2abap( exporting property_path = item_path changing abap_data = newline js_object = js_object ).
+            when others.
+              " yup.
+          endcase.
+          insert <comp> into table <itab>.
+          free newline.
+        endloop.
+      endif.
+
+    when others. " kind_class, kind_intf
+      " forget it.
+
+  endcase.
+
+
+endmethod.
