@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_SUSO" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <TOBJ>
+    <OBJCT>Z_JSON</OBJCT>
+    <FIEL1>FMNAME</FIEL1>
+    <OCLSS>ZCES</OCLSS>
+    <CONVERSION>X</CONVERSION>
+   </TOBJ>
+   <TOBJT>
+    <LANGU>E</LANGU>
+    <OBJECT>Z_JSON</OBJECT>
+    <TTEXT>Check function module invocation via JSON handler</TTEXT>
+   </TOBJT>
+   <TOBJVORFLG>
+    <OBJCT>Z_JSON</OBJCT>
+   </TOBJVORFLG>
+   <TACTZ/>
+   <TOBJVORDAT/>
+   <TOBJVOR/>
+  </asx:values>
+ </asx:abap>
+</abapGit>
