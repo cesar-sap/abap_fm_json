@@ -11,7 +11,7 @@ The purpose of this adaptor is to allow calling ABAP function modules via HTTP a
 
 ## How to install
 
-*It looks that SAPLink is dead or dying, and [abapGit](https://github.com/larshp/abapGit) is the way to go. The new repository should work with abapGit, please inform me if you find any issue.
+*It looks that SAPLink is dead or dying, and [abapGit](https://github.com/larshp/abapGit) is the way to go. The new repository should work with abapGit, please inform me if you find any issue*.
 
 *Many people are currently getting trouble to make SAPLink work. If you come accross problems, I have made available a transport request for direct import into an ABAP system in [transport/750](https://github.com/cesar-sap/abap_fm_json/tree/master/transport/750)*.
 
