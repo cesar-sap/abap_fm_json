@@ -13,7 +13,7 @@ The purpose of this adaptor is to allow calling ABAP function modules via HTTP a
 
 *It looks that SAPLink is dead or dying, and [abapGit](https://github.com/larshp/abapGit) is the way to go. The new repository should work with abapGit, please inform me if you find any issue*.
 
-*Many people are currently getting trouble to make SAPLink work. If you come accross problems, I have made available a transport request for direct import into an ABAP system in [transport/750](https://github.com/cesar-sap/abap_fm_json/tree/master/transport/750)*.
+*Many people are currently getting trouble to make SAPLink work. If you come accross problems, I have made available a transport request for direct import into an ABAP system in [transport/](https://github.com/cesar-sap/abap_fm_json/tree/master/transport/)*.
 
 In order to install this you need [SAPLink](https://sap.assembla.com/spaces/saplink/wiki). First install SAPLink in your ABAP server following the [SAPLink installation instrucctions](http://wiki.scn.sap.com/wiki/display/ABAP/SAPlink+User+Documentation). Be sure to install the required [SAPLink plugins](https://www.assembla.com/spaces/saplink/wiki/SAPlink_plugin_list). To minimize trouble, I recommend your installing the [Nugget that contains all commonly used plugings](https://www.assembla.com/spaces/saplink-plugins/subversion/source/HEAD/build).
 
