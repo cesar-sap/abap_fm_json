@@ -1,0 +1,105 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_CLAS" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <VSEOCLASS>
+    <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+    <VERSION>1</VERSION>
+    <LANGU>E</LANGU>
+    <DESCRIPT>JSON/ABAP Handler</DESCRIPT>
+    <EXPOSURE>2</EXPOSURE>
+    <STATE>1</STATE>
+    <CLSCCINCL>X</CLSCCINCL>
+    <FIXPT>X</FIXPT>
+    <UNICODE>X</UNICODE>
+   </VSEOCLASS>
+   <TPOOL/>
+   <DESCRIPTIONS>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>ABAP2JSON</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts ABAP to JSON</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>ABAP2PERL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts ABAP to Perl data dumper representation</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>ABAP2XML</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts ABAP to simple XML</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>ABAP2YAML</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts ABAP to YAML</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>BUILD_PARAMS</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Builds params for function call</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>DESERIALIZE_ID</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts JSON data to ABAP using transformation id</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>JSON2ABAP</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Puts JSON into ABAP data using JavaScript</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>JSON_DESERIALIZE</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Converts JSON data to ABAP using JavaScript</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>NOTES</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Info notes</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>SERIALIZE_ID</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Serialize function data to JSON/XML using transformation id</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>SERIALIZE_JSON</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Serialize function data to JSON</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>SERIALIZE_PERL</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Serialize function data to Perl Data::Dumper</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>SERIALIZE_XML</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Serialize function data to XML</DESCRIPT>
+    </SEOCOMPOTX>
+    <SEOCOMPOTX>
+     <CLSNAME>ZCL_JSON_HANDLER</CLSNAME>
+     <CMPNAME>SERIALIZE_YAML</CMPNAME>
+     <LANGU>E</LANGU>
+     <DESCRIPT>Serialize function data to YAML</DESCRIPT>
+    </SEOCOMPOTX>
+   </DESCRIPTIONS>
+  </asx:values>
+ </asx:abap>
+</abapGit>
