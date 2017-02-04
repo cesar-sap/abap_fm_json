@@ -1932,20 +1932,18 @@ method JSON2ABAP.
         linedesc = tabldesc->get_table_line_type( ).
         linetype = linedesc->get_relative_name( ).
         assign <abap_data> to <itab>.
-        loop at js_property_table into js_property where kind NE 'I'. " I contains the JS object length
+        loop at js_property_table into js_property where name NE 'length'. " the JS object length
           create data newline type (linetype).
           assign newline->* to <comp>.
           case js_property-kind.
-            when 'S'.
-              " Process scalars in plain table components(same as the kind_elem above)
-              assign_scalar_value <comp> js_property-value.
             when 'O'.
               concatenate l_property_path js_property-name into item_path separated by '.'.
               condense item_path.
 *> Recursive call here
               json2abap( exporting property_path = item_path changing abap_data = newline js_object = js_object ).
-            when others.
-              " yup.
+            when others. " Assume scalars, 'S', 'I', or other JS types
+              " Process scalars in plain table components(same as the kind_elem above)
+              assign_scalar_value <comp> js_property-value.
           endcase.
           insert <comp> into table <itab>.
           free newline.
