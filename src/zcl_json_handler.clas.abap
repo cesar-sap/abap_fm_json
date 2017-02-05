@@ -1867,11 +1867,15 @@ method JSON2ABAP.
     l_property_path = property_path.
   endif.
 **
-
 **
   js_property_table = js_object->get_properties_scope_global( property_path = l_property_path ).
   property_table = js_property_table.
-  if l_property_path eq 'json_obj'. exit. endif.  " Just get top level properties and return
+
+* Exit if abap_data is not supplied, normally when called
+* from json_deserialize to get top level properties
+  if abap_data is not supplied.
+    exit.
+  endif. "***
 
 *
 * Get ABAP data type, dereference if necessary and start
