@@ -3,14 +3,15 @@ class ZCL_JSON_HANDLER definition
   create public .
 
 public section.
+  type-pools ABAP .
+  type-pools JS .
 
 *"* public components of class ZCL_JSON_HANDLER
 *"* do not include other source files here!!!
   interfaces IF_HTTP_EXTENSION .
 
-  type-pools ABAP .
-  constants XNL type ABAP_CHAR1 value %_NEWLINE. "#EC NOTEXT
-  constants XCRLF type ABAP_CR_LF value %_CR_LF. "#EC NOTEXT
+  constants XNL type ABAP_CHAR1 value %_NEWLINE ##NO_TEXT.
+  constants XCRLF type ABAP_CR_LF value %_CR_LF ##NO_TEXT.
   data MY_SERVICE type STRING .
   data MY_URL type STRING .
 
@@ -19,6 +20,7 @@ public section.
       !ABAP_DATA type DATA
       !NAME type STRING optional
       !UPCASE type XFELD optional
+      !CAMELCASE type XFELD optional
     returning
       value(JSON_STRING) type STRING
     exceptions
@@ -64,7 +66,6 @@ public section.
     exceptions
       INVALID_FUNCTION
       UNSUPPORTED_PARAM_TYPE .
-  type-pools JS .
   class-methods JSON2ABAP
     importing
       !JSON_STRING type STRING optional
@@ -95,6 +96,7 @@ public section.
       !SHOW_IMPP type ABAP_BOOL optional
       !JSONP type STRING optional
       !LOWERCASE type ABAP_BOOL default ABAP_FALSE
+      !CAMELCASE type ABAP_BOOL default ABAP_FALSE
     exporting
       !O_STRING type STRING .
   class-methods SERIALIZE_PERL
@@ -147,6 +149,7 @@ public section.
       !LOWERCASE type ABAP_BOOL default ABAP_FALSE
       !FORMAT type STRING default 'JSON'
       !FUNCNAME type RS38L_FNAM optional
+      !CAMELCASE type ABAP_BOOL default ABAP_FALSE
     exporting
       !O_STRING type STRING
     raising
@@ -309,7 +312,7 @@ method ABAP2JSON.
     loop at <itab> assigning <comp>.
       add 1 to l_index.
 *> Recursive call for each table row:
-      rec_json_string = abap2json( abap_data = <comp> upcase = upcase ).
+      rec_json_string = abap2json( abap_data = <comp> upcase = upcase camelcase = camelcase ).
       append rec_json_string to json_fragments.
       clear rec_json_string.
       if l_index < l_lines.
@@ -334,13 +337,17 @@ method ABAP2JSON.
         l_name = <abapcomp>-name.
 ** ABAP names are usually in caps, set upcase to avoid the conversion to lower case.
         if upcase ne 'X'.
-          translate l_name to lower case.
+          " translate l_name to lower case.
+          l_name = to_lower( l_name ).
+        endif.
+        if camelcase eq 'X'.
+             l_name = to_mixed( val = l_name  case = 'a' ).
         endif.
         describe field <comp> type s_type.
         if s_type eq cl_abap_typedescr=>typekind_table or s_type eq cl_abap_typedescr=>typekind_dref or
            s_type eq cl_abap_typedescr=>typekind_struct1 or s_type eq cl_abap_typedescr=>typekind_struct2.
 *> Recursive call for non-scalars:
-          rec_json_string = abap2json( abap_data = <comp> name = l_name upcase = upcase ).
+          rec_json_string = abap2json( abap_data = <comp> name = l_name upcase = upcase camelcase = camelcase ).
         else.
           if s_type eq cl_abap_typedescr=>TYPEKIND_OREF or s_type eq cl_abap_typedescr=>TYPEKIND_IREF.
             rec_json_string = '"REF UNSUPPORTED"'.
@@ -1294,6 +1301,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
 
   data: show_import_params type abap_bool value abap_false,
         lowercase type abap_bool value abap_false,
+        camelcase type abap_bool value abap_false,
         path_info      type string,
         p_info_tab     type table of string,
         format         type string,
@@ -1373,6 +1381,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   action                 = server->request->get_form_field( 'action' ).
   jsonp_callback         = server->request->get_form_field( 'callback' ).
   lowercase              = server->request->get_form_field( 'lowercase' ).
+  camelcase              = server->request->get_form_field( 'camelcase' ).
   format               = server->request->get_form_field( 'format' ).
   accept               = server->request->get_header_field( name = 'Accept' ).
 
@@ -1397,27 +1406,6 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   if funcname is initial and action is initial.
     http_error '404' 'Not Found' 'Empty request.' .
   endif.
-
-***** THIS IS VERY OBSOLETE. PARAMS SHOULD NOT BE PASSED AS PATH_INFO *****
-***** REMOVE THIS ******
-* Read lowercase and format parameters from path_info (query string has precedence).
-*  loop at p_info_tab into str_item.
-*    translate str_item to lower case.
-*    case str_item.
-*      when 'lc'.
-*        if lowercase is initial.
-*          lowercase = 'X'.
-*        endif.
-*      when 'json' or 'yaml' or 'xml' or 'perl'.
-*        if format is initial.
-*          format = str_item.
-*        endif.
-*      when others.
-*        " we'll see
-*    endcase.
-*  endloop.
-**** REMOVE THIS *******
-
 
 * Get the desired response format from "Accept" header (as in RFC 2616 sec 14.1)
 * See http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html. Thanks Uwe!!
@@ -1479,6 +1467,11 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   if sy-subrc ne 0.
     http_error '403' 'Not authorized' 'You are not authorized to invoke this function module.'.
   endif.
+
+*****************************************************************************
+* check CORS
+* see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS *
+*****************************************************************************
 
 
 
@@ -1701,6 +1694,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
           jsonp       = jsonp_callback
           show_impp   = show_import_params
           lowercase   = lowercase
+          camelcase   = camelcase
 *          format      = format
         IMPORTING
           o_string = o_cdata.
@@ -2199,9 +2193,13 @@ method SERIALIZE_JSON.
     paramname = <parm>-name.
     if lowercase eq abap_true.
       translate paramname to lower case.
+      " paramname = to_lower( paramname ).
       upcase = space.
     endif.
-    rec_json_string = abap2json( abap_data = <parm>-value  name = paramname  upcase = upcase ).
+    if camelcase eq abap_true.
+      paramname = to_mixed( val = paramname  case = 'a').
+    endif.
+    rec_json_string = abap2json( abap_data = <parm>-value  name = paramname  upcase = upcase camelcase = camelcase ).
     append rec_json_string to json_fragments.
     clear rec_json_string.
     if l_index < l_lines.
