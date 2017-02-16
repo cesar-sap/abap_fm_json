@@ -50,7 +50,9 @@ Some parameters exist as standard. Most notably:
 
 `format=<output_format>` set the format of the response. Valid formats are: json, xml, yaml, perl.
 
-`lowercase=X` will show ABAP variable names in lower case.
+`lowercase=X` the response will show ABAP variable names in lower case.
+
+`camelcase=X` the response will show ABAP variable names in [lowerCamelCase](http://wiki.c2.com/?LowerCamelCase).
 
 `show_import_params=X` will include the IMPORT parameters in the response.
 
