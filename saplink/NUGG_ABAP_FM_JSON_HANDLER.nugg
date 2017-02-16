@@ -38,6 +38,7 @@
 
   data: show_import_params type abap_bool value abap_false,
         lowercase type abap_bool value abap_false,
+        camelcase type abap_bool value abap_false,
         path_info      type string,
         p_info_tab     type table of string,
         format         type string,
@@ -117,6 +118,7 @@
   action                 = server-&gt;request-&gt;get_form_field( &apos;action&apos; ).
   jsonp_callback         = server-&gt;request-&gt;get_form_field( &apos;callback&apos; ).
   lowercase              = server-&gt;request-&gt;get_form_field( &apos;lowercase&apos; ).
+  camelcase              = server-&gt;request-&gt;get_form_field( &apos;camelcase&apos; ).
   format               = server-&gt;request-&gt;get_form_field( &apos;format&apos; ).
   accept               = server-&gt;request-&gt;get_header_field( name = &apos;Accept&apos; ).
 
@@ -141,27 +143,6 @@
   if funcname is initial and action is initial.
     http_error &apos;404&apos; &apos;Not Found&apos; &apos;Empty request.&apos; .
   endif.
-
-***** THIS IS VERY OBSOLETE. PARAMS SHOULD NOT BE PASSED AS PATH_INFO *****
-***** REMOVE THIS ******
-* Read lowercase and format parameters from path_info (query string has precedence).
-*  loop at p_info_tab into str_item.
-*    translate str_item to lower case.
-*    case str_item.
-*      when &apos;lc&apos;.
-*        if lowercase is initial.
-*          lowercase = &apos;X&apos;.
-*        endif.
-*      when &apos;json&apos; or &apos;yaml&apos; or &apos;xml&apos; or &apos;perl&apos;.
-*        if format is initial.
-*          format = str_item.
-*        endif.
-*      when others.
-*        &quot; we&apos;ll see
-*    endcase.
-*  endloop.
-**** REMOVE THIS *******
-
 
 * Get the desired response format from &quot;Accept&quot; header (as in RFC 2616 sec 14.1)
 * See http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html. Thanks Uwe!!
@@ -223,6 +204,11 @@
   if sy-subrc ne 0.
     http_error &apos;403&apos; &apos;Not authorized&apos; &apos;You are not authorized to invoke this function module.&apos;.
   endif.
+
+*****************************************************************************
+* check CORS
+* see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS *
+*****************************************************************************
 
 
 
@@ -445,6 +431,7 @@
           jsonp       = jsonp_callback
           show_impp   = show_import_params
           lowercase   = lowercase
+          camelcase   = camelcase
 *          format      = format
         IMPORTING
           o_string = o_cdata.
@@ -476,7 +463,8 @@ endmethod.</source>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="ABAP_DATA" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="1 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="DATA"/>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="NAME" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="2 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING" PAROPTIONL="X"/>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="UPCASE" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="3 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="XFELD" PAROPTIONL="X"/>
-   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="JSON_STRING" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="4 " DISPID="0 " PARDECLTYP="3" PARPASSTYP="0" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="CAMELCASE" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="4 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="XFELD" PAROPTIONL="X"/>
+   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="JSON_STRING" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="5 " DISPID="0 " PARDECLTYP="3" PARPASSTYP="0" TYPTYPE="1" TYPE="STRING"/>
    <exception CLSNAME="ZCL_JSON_HANDLER" CMPNAME="ABAP2JSON" SCONAME="ERROR_IN_DATA_DESCRIPTION" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
    <source>method ABAP2JSON.
 */**********************************************/*
@@ -623,7 +611,7 @@ endmethod.</source>
     loop at &lt;itab&gt; assigning &lt;comp&gt;.
       add 1 to l_index.
 *&gt; Recursive call for each table row:
-      rec_json_string = abap2json( abap_data = &lt;comp&gt; upcase = upcase ).
+      rec_json_string = abap2json( abap_data = &lt;comp&gt; upcase = upcase camelcase = camelcase ).
       append rec_json_string to json_fragments.
       clear rec_json_string.
       if l_index &lt; l_lines.
@@ -648,13 +636,17 @@ endmethod.</source>
         l_name = &lt;abapcomp&gt;-name.
 ** ABAP names are usually in caps, set upcase to avoid the conversion to lower case.
         if upcase ne &apos;X&apos;.
-          translate l_name to lower case.
+          &quot; translate l_name to lower case.
+          l_name = to_lower( l_name ).
+        endif.
+        if camelcase eq &apos;X&apos;.
+             l_name = to_mixed( val = l_name  case = &apos;a&apos; ).
         endif.
         describe field &lt;comp&gt; type s_type.
         if s_type eq cl_abap_typedescr=&gt;typekind_table or s_type eq cl_abap_typedescr=&gt;typekind_dref or
            s_type eq cl_abap_typedescr=&gt;typekind_struct1 or s_type eq cl_abap_typedescr=&gt;typekind_struct2.
 *&gt; Recursive call for non-scalars:
-          rec_json_string = abap2json( abap_data = &lt;comp&gt; name = l_name upcase = upcase ).
+          rec_json_string = abap2json( abap_data = &lt;comp&gt; name = l_name upcase = upcase camelcase = camelcase ).
         else.
           if s_type eq cl_abap_typedescr=&gt;TYPEKIND_OREF or s_type eq cl_abap_typedescr=&gt;TYPEKIND_IREF.
             rec_json_string = &apos;&quot;REF UNSUPPORTED&quot;&apos;.
@@ -1975,7 +1967,8 @@ endmethod.</source>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="LOWERCASE" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="6 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_FALSE"/>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="FORMAT" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="7 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING" PARVALUE="&apos;JSON&apos;"/>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="FUNCNAME" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="8 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="RS38L_FNAM" PAROPTIONL="X"/>
-   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="O_STRING" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="9 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="CAMELCASE" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="9 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_FALSE"/>
+   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="O_STRING" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="10 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
    <exception CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_ID" SCONAME="ZCX_JSON" VERSION="1" LANGU="E" MTDTYPE="0" EDITORDER="1 "/>
    <source>method SERIALIZE_ID.
 */***********************************************************/*
@@ -2073,7 +2066,8 @@ endmethod.</source>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_JSON" SCONAME="SHOW_IMPP" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="4 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PAROPTIONL="X"/>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_JSON" SCONAME="JSONP" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="5 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING" PAROPTIONL="X"/>
    <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_JSON" SCONAME="LOWERCASE" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="6 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_FALSE"/>
-   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_JSON" SCONAME="O_STRING" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="7 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
+   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_JSON" SCONAME="CAMELCASE" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="7 " DISPID="0 " PARDECLTYP="0" PARPASSTYP="1" TYPTYPE="1" TYPE="ABAP_BOOL" PARVALUE="ABAP_FALSE"/>
+   <parameter CLSNAME="ZCL_JSON_HANDLER" CMPNAME="SERIALIZE_JSON" SCONAME="O_STRING" VERSION="1" LANGU="E" CMPTYPE="1" MTDTYPE="0" EDITORDER="8 " DISPID="0 " PARDECLTYP="1" PARPASSTYP="1" TYPTYPE="1" TYPE="STRING"/>
    <source>method SERIALIZE_JSON.
 * ABAP based JSON serializer for function modules (January 2013).
   type-pools: ABAP.
@@ -2116,9 +2110,13 @@ endmethod.</source>
     paramname = &lt;parm&gt;-name.
     if lowercase eq abap_true.
       translate paramname to lower case.
+      &quot; paramname = to_lower( paramname ).
       upcase = space.
     endif.
-    rec_json_string = abap2json( abap_data = &lt;parm&gt;-value  name = paramname  upcase = upcase ).
+    if camelcase eq abap_true.
+      paramname = to_mixed( val = paramname  case = &apos;a&apos;).
+    endif.
+    rec_json_string = abap2json( abap_data = &lt;parm&gt;-value  name = paramname  upcase = upcase camelcase = camelcase ).
     append rec_json_string to json_fragments.
     clear rec_json_string.
     if l_index &lt; l_lines.
