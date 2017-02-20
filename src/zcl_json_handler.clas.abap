@@ -221,11 +221,16 @@ method ABAP2JSON.
         endif.
         dont_quote = 'X'.
 
-      when 'F'. " Float (pending transformation to JSON float format with no quotes)
-*          condense &1.
-
-      when 'P'. " Packed number (used in quantities, for example)
+      when 'F'. " Float
         condense &1.
+        dont_quote = 'X'.
+
+      when 'P'. " Packed number (used in quantities or currency, for example)
+        condense &1.
+        if &1 < 0.
+          shift &1 by 1 places right circular.
+        endif.
+        dont_quote = 'X'.
 
       when 'X'. " Hexadecimal
 *         " Leave it as is, as JSON doesn't support Hex or Octal.
