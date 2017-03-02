@@ -514,7 +514,7 @@ endmethod.</source>
 *       1. ABAP numeric types
       when &apos;I&apos;. &quot; Integer
         condense &amp;1.
-        if &amp;1 &lt; 0.
+        if sign( &amp;1 ) &lt; 0.
           shift &amp;1 by 1 places right circular.
         endif.
         dont_quote = &apos;X&apos;.
@@ -525,13 +525,16 @@ endmethod.</source>
 
       when &apos;P&apos;. &quot; Packed number (used in quantities or currency, for example)
         condense &amp;1.
-        if &amp;1 &lt; 0.
+        if sign( &amp;1 ) &lt; 0.
           shift &amp;1 by 1 places right circular.
         endif.
         dont_quote = &apos;X&apos;.
 
       when &apos;X&apos;. &quot; Hexadecimal
-*         &quot; Leave it as is, as JSON doesn&apos;t support Hex or Octal.
+        condense &amp;1.
+        concatenate &apos;0x&apos; &amp;1 into &amp;1.
+*        dont_quote = &apos;X&apos;.
+*        &quot;Quote it, as JSON doesn&apos;t support Hex or Octal as native types.
 
 *       2. ABAP char types
       when &apos;D&apos;. &quot; Date type
@@ -745,19 +748,26 @@ endmethod.</source>
 *       1. ABAP numeric types
       when &apos;I&apos;. &quot; Integer
         condense &amp;1.
-        if &amp;1 &lt; 0.
+        if sign( &amp;1 ) &lt; 0.
           shift &amp;1 by 1 places right circular.
         endif.
         dont_quote = &apos;X&apos;.
 
-      when &apos;F&apos;. &quot; Float (pending transformation to Perl float format with no quotes)
-*          condense &amp;1.
+      when &apos;F&apos;. &quot; Float
+        condense &amp;1.
+        dont_quote = &apos;X&apos;.
 
       when &apos;P&apos;. &quot; Packed number (used in quantities, for example)
         condense &amp;1.
+        if sign( &amp;1 ) &lt; 0.
+          shift &amp;1 by 1 places right circular.
+        endif.
+        dont_quote = &apos;X&apos;.
 
       when &apos;X&apos;. &quot; Hexadecimal
-*         &quot; Pending transformation to Perl hex representation.
+        condense &amp;1.
+        concatenate &apos;0x&apos; &amp;1 into &amp;1.
+        dont_quote = &apos;X&apos;.
 
 *       2. ABAP char types
       when &apos;D&apos;. &quot; Date type
@@ -962,18 +972,22 @@ endmethod.</source>
 *       1. ABAP numeric types
       when &apos;I&apos;. &quot; Integer
         condense &amp;1.
-        if &amp;1 &lt; 0.
+        if sign( &amp;1 ) &lt; 0.
           shift &amp;1 by 1 places right circular.
         endif.
 
-      when &apos;F&apos;. &quot; Float (one day check correct XML representation)
-*          condense &amp;1.
+      when &apos;F&apos;. &quot; Float
+        condense &amp;1.
 
       when &apos;P&apos;. &quot; Packed number (used in quantities, for example)
         condense &amp;1.
+        if sign( &amp;1 ) &lt; 0.
+          shift &amp;1 by 1 places right circular.
+        endif.
 
       when &apos;X&apos;. &quot; Hexadecimal
-*         &quot; One day I&apos;ll check correct XML representation.
+        condense &amp;1.
+        concatenate &apos;0x&apos; &amp;1 into &amp;1.
 
 *       2. ABAP char types
       when &apos;D&apos;. &quot; Date type
@@ -1311,19 +1325,26 @@ endmethod.</source>
 *       1. ABAP numeric types
         when &apos;I&apos;. &quot; Integer
           condense l_value.
-          if l_value &lt; 0.
+          if sign( l_value ) &lt; 0.
             shift l_value by 1 places right circular.
           endif.
           dont_quote = &apos;X&apos;.
 
-        when &apos;F&apos;. &quot; Float (pending transformation to JSON float format with no quotes)
-*          condense l_value.
+        when &apos;F&apos;. &quot; Float
+          condense l_value.
+          dont_quote = &apos;X&apos;.
 
         when &apos;P&apos;. &quot; Packed number (used in quantities, for example)
           condense l_value.
+          if sign( l_value ) &lt; 0.
+            shift l_value by 1 places right circular.
+          endif.
+          dont_quote = &apos;X&apos;.
 
         when &apos;X&apos;. &quot; Hexadecimal
-*         &quot; Leave it as is, as JSON doesn&apos;t support Hex or Octal.
+          condense l_value.
+          concatenate &apos;0x&apos; l_value into l_value.
+          dont_quote = &apos;X&apos;.
 
 *       2. ABAP char types
         when &apos;D&apos;. &quot; Date type
