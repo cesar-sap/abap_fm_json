@@ -216,7 +216,7 @@ method ABAP2JSON.
 *       1. ABAP numeric types
       when 'I'. " Integer
         condense &1.
-        if &1 < 0.
+        if sign( &1 ) < 0.
           shift &1 by 1 places right circular.
         endif.
         dont_quote = 'X'.
@@ -227,13 +227,16 @@ method ABAP2JSON.
 
       when 'P'. " Packed number (used in quantities or currency, for example)
         condense &1.
-        if &1 < 0.
+        if sign( &1 ) < 0.
           shift &1 by 1 places right circular.
         endif.
         dont_quote = 'X'.
 
       when 'X'. " Hexadecimal
-*         " Leave it as is, as JSON doesn't support Hex or Octal.
+        condense &1.
+        concatenate '0x' &1 into &1.
+*        dont_quote = 'X'.
+*        "Quote it, as JSON doesn't support Hex or Octal as native types.
 
 *       2. ABAP char types
       when 'D'. " Date type
@@ -442,19 +445,26 @@ method ABAP2PERL.
 *       1. ABAP numeric types
       when 'I'. " Integer
         condense &1.
-        if &1 < 0.
+        if sign( &1 ) < 0.
           shift &1 by 1 places right circular.
         endif.
         dont_quote = 'X'.
 
-      when 'F'. " Float (pending transformation to Perl float format with no quotes)
-*          condense &1.
+      when 'F'. " Float
+        condense &1.
+        dont_quote = 'X'.
 
       when 'P'. " Packed number (used in quantities, for example)
         condense &1.
+        if sign( &1 ) < 0.
+          shift &1 by 1 places right circular.
+        endif.
+        dont_quote = 'X'.
 
       when 'X'. " Hexadecimal
-*         " Pending transformation to Perl hex representation.
+        condense &1.
+        concatenate '0x' &1 into &1.
+        dont_quote = 'X'.
 
 *       2. ABAP char types
       when 'D'. " Date type
@@ -653,18 +663,22 @@ method ABAP2XML.
 *       1. ABAP numeric types
       when 'I'. " Integer
         condense &1.
-        if &1 < 0.
+        if sign( &1 ) < 0.
           shift &1 by 1 places right circular.
         endif.
 
-      when 'F'. " Float (one day check correct XML representation)
-*          condense &1.
+      when 'F'. " Float
+        condense &1.
 
       when 'P'. " Packed number (used in quantities, for example)
         condense &1.
+        if sign( &1 ) < 0.
+          shift &1 by 1 places right circular.
+        endif.
 
       when 'X'. " Hexadecimal
-*         " One day I'll check correct XML representation.
+        condense &1.
+        concatenate '0x' &1 into &1.
 
 *       2. ABAP char types
       when 'D'. " Date type
@@ -993,19 +1007,26 @@ method ABAP2YAML.
 *       1. ABAP numeric types
         when 'I'. " Integer
           condense l_value.
-          if l_value < 0.
+          if sign( l_value ) < 0.
             shift l_value by 1 places right circular.
           endif.
           dont_quote = 'X'.
 
-        when 'F'. " Float (pending transformation to JSON float format with no quotes)
-*          condense l_value.
+        when 'F'. " Float
+          condense l_value.
+          dont_quote = 'X'.
 
         when 'P'. " Packed number (used in quantities, for example)
           condense l_value.
+          if sign( l_value ) < 0.
+            shift l_value by 1 places right circular.
+          endif.
+          dont_quote = 'X'.
 
         when 'X'. " Hexadecimal
-*         " Leave it as is, as JSON doesn't support Hex or Octal.
+          condense l_value.
+          concatenate '0x' l_value into l_value.
+          dont_quote = 'X'.
 
 *       2. ABAP char types
         when 'D'. " Date type
