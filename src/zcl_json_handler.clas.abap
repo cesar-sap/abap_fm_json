@@ -21,6 +21,7 @@ public section.
       !NAME type STRING optional
       !UPCASE type XFELD optional
       !CAMELCASE type XFELD optional
+      !CAMELCASE_NAMES type STRINGTAB optional
     returning
       value(JSON_STRING) type STRING
     exceptions
@@ -95,8 +96,9 @@ public section.
       !EXCEPTAB type ABAP_FUNC_EXCPBIND_TAB optional
       !SHOW_IMPP type ABAP_BOOL optional
       !JSONP type STRING optional
-      !LOWERCASE type ABAP_BOOL default ABAP_FALSE
+      !LOWERCASE type ABAP_BOOL default ABAP_TRUE
       !CAMELCASE type ABAP_BOOL default ABAP_FALSE
+      !CAMELCASE_NAMES type STRINGTAB optional
     exporting
       !O_STRING type STRING .
   class-methods SERIALIZE_PERL
@@ -167,7 +169,7 @@ ENDCLASS.
 CLASS ZCL_JSON_HANDLER IMPLEMENTATION.
 
 
-method ABAP2JSON.
+method abap2json.
 */**********************************************/*
 */ This method takes any ABAP data variable and /*
 */ returns a string representing its value in   /*
@@ -184,25 +186,27 @@ method ABAP2JSON.
     c_quote type c value '"'.
 
   data:
-    dont_quote type xfeld,
-    json_fragments type table of string,
+    dont_quote      type xfeld,
+    json_fragments  type table of string,
     rec_json_string type string,
-    l_type  type c,
-    s_type type c,
-    l_comps type i,
-    l_lines type i,
-    l_index type i,
-    l_value type string,
-    l_name type string,
-    l_strudescr type ref to cl_abap_structdescr.
+    l_type          type c,
+    s_type          type c,
+    l_comps         type i,
+    l_lines         type i,
+    l_index         type i,
+    l_value         type string,
+    l_name          type string,
+    l_strudescr     type ref to cl_abap_structdescr.
 
   field-symbols:
     <abap_data> type any,
-    <itab> type any table,
-    <stru> type any table,
-    <comp> type any,
-    <abapcomp> type abap_compdescr.
+    <itab>      type any table,
+    <stru>      type any table,
+    <comp>      type any,
+    <abapcomp>  type abap_compdescr.
 
+  data   my_camelcase    type xfeld.
+  my_camelcase = camelcase.
 
   define get_scalar_value.
     " &1 : assigned var
@@ -320,7 +324,7 @@ method ABAP2JSON.
     loop at <itab> assigning <comp>.
       add 1 to l_index.
 *> Recursive call for each table row:
-      rec_json_string = abap2json( abap_data = <comp> upcase = upcase camelcase = camelcase ).
+      rec_json_string = abap2json( abap_data = <comp> upcase = upcase camelcase = my_camelcase camelcase_names = camelcase_names ).
       append rec_json_string to json_fragments.
       clear rec_json_string.
       if l_index < l_lines.
@@ -349,15 +353,23 @@ method ABAP2JSON.
           l_name = to_lower( l_name ).
         endif.
         if camelcase eq 'X'.
-             l_name = to_mixed( val = l_name  case = 'a' ).
+          l_name = to_mixed( val = l_name  case = 'a' ).
+        else.
+          read table camelcase_names from l_name transporting no fields.
+          if sy-subrc eq 0.
+            l_name = to_mixed( val = l_name  case = 'a' ).
+            my_camelcase = 'X'.
+          else.
+            my_camelcase = abap_false.
+          endif.
         endif.
         describe field <comp> type s_type.
         if s_type eq cl_abap_typedescr=>typekind_table or s_type eq cl_abap_typedescr=>typekind_dref or
            s_type eq cl_abap_typedescr=>typekind_struct1 or s_type eq cl_abap_typedescr=>typekind_struct2.
 *> Recursive call for non-scalars:
-          rec_json_string = abap2json( abap_data = <comp> name = l_name upcase = upcase camelcase = camelcase ).
+          rec_json_string = abap2json( abap_data = <comp> name = l_name upcase = upcase camelcase = my_camelcase camelcase_names = camelcase_names ).
         else.
-          if s_type eq cl_abap_typedescr=>TYPEKIND_OREF or s_type eq cl_abap_typedescr=>TYPEKIND_IREF.
+          if s_type eq cl_abap_typedescr=>typekind_oref or s_type eq cl_abap_typedescr=>typekind_iref.
             rec_json_string = '"REF UNSUPPORTED"'.
           else.
             get_scalar_value rec_json_string <comp> s_type.
@@ -1326,7 +1338,8 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   type-pools abap.
 
   data: show_import_params type abap_bool value abap_false,
-        lowercase type abap_bool value abap_false,
+        upcase    type abap_bool value abap_false,
+        lowercase type abap_bool value abap_true,
         camelcase type abap_bool value abap_false,
         path_info      type string,
         p_info_tab     type table of string,
@@ -1347,6 +1360,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
         proto          type string,
         http_code      type i,
         http_status    type string,
+        camelcase_names type stringtab,
 
         funcname       type rs38l_fnam,
         funcname2      type string,
@@ -1406,10 +1420,18 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   show_import_params   = server->request->get_form_field( 'show_import_params' ).
   action                 = server->request->get_form_field( 'action' ).
   jsonp_callback         = server->request->get_form_field( 'callback' ).
-  lowercase              = server->request->get_form_field( 'lowercase' ).
-  camelcase              = server->request->get_form_field( 'camelcase' ).
   format               = server->request->get_form_field( 'format' ).
   accept               = server->request->get_header_field( name = 'Accept' ).
+
+* the case with CASE and forgive the mess.
+* Now, it is lowercase by default.
+  lowercase              = server->request->get_form_field( 'lowercase' ).
+  upcase              = server->request->get_form_field( 'upcase' ).
+  camelcase              = server->request->get_form_field( 'camelcase' ).
+  if upcase ne abap_true. " only upcase matters.
+    lowercase = abap_true.
+  endif.
+
 
 * Try "$" equivalents:
   if format is initial.
@@ -1587,6 +1609,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
     <fm_int_handler>-path_info = path_info.
     <fm_int_handler>-qs_tab = qs_nvp.
     <fm_int_handler>-i_json_data = i_cdata.
+    <fm_int_handler>-camelcase_names = camelcase_names.
     append '_ICF_DATA' to <fm_int_handler>-delete_params.
     <fm_int_handler>-server = server. " Beware!
   endif.
@@ -1649,6 +1672,8 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
       str_item = <fm_int_handler>-http_code. condense str_item.
       http_error str_item <fm_int_handler>-http_status <fm_int_handler>-error_message.
     endif.
+* read camelcase_names
+    camelcase_names = <fm_int_handler>-camelcase_names.
 * Delete indicated params for not showing them in the response
     loop at <fm_int_handler>-delete_params into dparam.
       delete paramtab where name eq dparam.
@@ -1721,6 +1746,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
           show_impp   = show_import_params
           lowercase   = lowercase
           camelcase   = camelcase
+          camelcase_names = camelcase_names
 *          format      = format
         IMPORTING
           o_string = o_cdata.
@@ -1737,6 +1763,9 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   server->response->set_header_field( name = 'X-Data-Format' value = format ). "
 * Activate compression (will compress when size>1kb if requested by client in Accept-Encoding: gzip. Very nice.).
   server->response->set_compression( ).
+*  if <fm_int_handler>-alt_response is not initial.
+*    o_cdata = <fm_int_handler>-alt_response.
+*  endif.
   server->response->set_cdata( data = o_cdata ).
 
 *******************************************
@@ -2177,9 +2206,9 @@ method SERIALIZE_ID.
 endmethod.
 
 
-method SERIALIZE_JSON.
+method serialize_json.
 * ABAP based JSON serializer for function modules (January 2013).
-  type-pools: ABAP.
+  type-pools: abap.
 
 ** Remember function parameter types
 **constants:
@@ -2193,7 +2222,9 @@ method SERIALIZE_JSON.
   data paramname type string.
   data l_lines type i.
   data l_index type i.
-  data upcase type xfeld value 'X'.
+  data upcase type xfeld value abap_true.
+  data my_camelcase type xfeld.
+  my_camelcase = camelcase.
   field-symbols <parm> type abap_func_parmbind.
   field-symbols <excep> type abap_func_excpbind.
 
@@ -2224,8 +2255,16 @@ method SERIALIZE_JSON.
     endif.
     if camelcase eq abap_true.
       paramname = to_mixed( val = paramname  case = 'a').
+    else.
+      read table camelcase_names from paramname transporting no fields.
+      if sy-subrc eq 0.
+        paramname = to_mixed( val = paramname  case = 'a' ).
+        my_camelcase = abap_true.
+      else.
+        my_camelcase = abap_false.
+      endif.
     endif.
-    rec_json_string = abap2json( abap_data = <parm>-value  name = paramname  upcase = upcase camelcase = camelcase ).
+    rec_json_string = abap2json( abap_data = <parm>-value  name = paramname  upcase = upcase camelcase = my_camelcase camelcase_names = camelcase_names ).
     append rec_json_string to json_fragments.
     clear rec_json_string.
     if l_index < l_lines.
