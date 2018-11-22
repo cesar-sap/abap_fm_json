@@ -2254,7 +2254,7 @@ method serialize_json.
       upcase = space.
     endif.
     if camelcase eq abap_true.
-      paramname = to_mixed( val = paramname  case = 'a').
+      paramname = to_mixed( val = paramname  case = 'a' ).
     else.
       read table camelcase_names from paramname transporting no fields.
       if sy-subrc eq 0.
@@ -2276,7 +2276,7 @@ method serialize_json.
     if l_lines gt 0.
       append ',' to json_fragments.
     endif.
-    rec_json_string = abap2json( abap_data = exceptab upcase = 'X' name = 'EXCEPTION').
+    rec_json_string = abap2json( abap_data = exceptab upcase = 'X' name = 'EXCEPTION' ).
     append rec_json_string to json_fragments.
     clear rec_json_string.
   endif.
@@ -2352,7 +2352,7 @@ method SERIALIZE_PERL.
     if l_lines gt 0.
       append ',' to perl_fragments.
     endif.
-    rec_perl_string = abap2perl( abap_data = exceptab upcase = 'X' name = 'EXCEPTION').
+    rec_perl_string = abap2perl( abap_data = exceptab upcase = 'X' name = 'EXCEPTION' ).
     append rec_perl_string to perl_fragments.
     clear rec_perl_string.
   endif.
