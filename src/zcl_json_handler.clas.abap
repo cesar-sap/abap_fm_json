@@ -1447,7 +1447,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
   read table p_info_tab index 2 into funcname.
   read table p_info_tab index 3 into funcname2.
   if sy-subrc eq 0.
-     concatenate '//' funcname '/' funcname2 into funcname.
+     concatenate '/' funcname '/' funcname2 into funcname.
      condense funcname.
   endif.
   translate funcname to upper case.
