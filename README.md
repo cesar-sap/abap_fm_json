@@ -67,7 +67,7 @@ Please note that the output format does not affect the input. The adaptor only s
 ## Session and logon support
 
 It is possible to activate ABAP session support for sequential calls to the adaptor (and thus running several calls in the same session context). Call the adaptor including a param action=start_session to activate it and action=end_session to finish it.
-The response of a started session contains two cookies (`sap-contextid` and `SAPSESSIONID_<SYSID>_<CLIENT>`), which must be supplied to all other requests of this session. <SYSID> is variable for the 3 character long system id (ABAP system field `sy-sysid`) and <CLIENT> a variable for the client (ABAP system field `sy-mandt`). 
+The response of a started session contains two cookies (`sap-contextid` and `SAPSESSIONID_<SYSID>_<CLIENT>`), which must be supplied to all other requests of this session. `<SYSID>` is a variable for the 3 character long system id (ABAP system field `sy-sysid`) and `<CLIENT>` a variable for the client (ABAP system field `sy-mandt`). 
 
 All ABAP logon methods are supported. Please configure the required one in SICF (see above).
 
