@@ -2395,6 +2395,8 @@ method SERIALIZE_XML.
   l_funcname = funcname.
   if lowercase eq abap_true.
      translate l_funcname to lower case.
+     " just in case we call namespaced functions:
+     replace all occurrences of '/' in l_funcname with '__'.
      upcase = space.
   endif.
 
